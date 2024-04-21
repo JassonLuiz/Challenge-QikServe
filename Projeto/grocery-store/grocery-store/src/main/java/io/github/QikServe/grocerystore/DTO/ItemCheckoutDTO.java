@@ -2,14 +2,16 @@ package io.github.QikServe.grocerystore.DTO;
 
 import io.github.QikServe.grocerystore.entity.Product;
 
+import java.math.BigDecimal;
+
 public class ItemCheckoutDTO {
     private Product product;
 
-    private int quantity;
-    private double itemTotal;
-    private double savings;
+    private BigDecimal quantity;
+    private BigDecimal itemTotal;
+    private BigDecimal savings;
 
-    public ItemCheckoutDTO(Product product, int quantity, double itemTotal, double savings) {
+    public ItemCheckoutDTO(Product product, BigDecimal quantity, BigDecimal itemTotal, BigDecimal savings) {
         this.product = product;
         this.quantity = quantity;
         this.itemTotal = itemTotal;
@@ -24,27 +26,27 @@ public class ItemCheckoutDTO {
         this.product = product;
     }
 
-    public int getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
 
-    public double getItemTotal() {
+    public BigDecimal getItemTotal() {
         return itemTotal;
     }
 
-    public void setTotalAmount(double itemTotal) {
+    public void setTotalAmount(BigDecimal itemTotal) {
         this.itemTotal = itemTotal;
     }
 
-    public double getSavings() {
+    public BigDecimal getSavings() {
         return savings;
     }
 
-    public void setSavings(double savings) {
+    public void setSavings(BigDecimal savings) {
         this.savings = savings;
     }
 }

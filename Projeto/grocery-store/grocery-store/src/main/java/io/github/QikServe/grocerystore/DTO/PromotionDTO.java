@@ -1,20 +1,27 @@
 package io.github.QikServe.grocerystore.DTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.QikServe.grocerystore.entity.PromotionType;
 
 public class PromotionDTO {
     private String id;
     private PromotionType type;
+
+    @JsonProperty("required_qty")
     private int requiredQty;
 
+    @JsonProperty("free_qty")
     private int freeQty;
-    private double amount;
+    private double price;
 
-    public PromotionDTO(String id, PromotionType type, int requiredQty, int freeQty, int amount) {
+    private int amount;
+
+    public PromotionDTO(String id, PromotionType type, int requiredQty, int freeQty, double price, int amount) {
         this.id = id;
         this.type = type;
         this.requiredQty = requiredQty;
         this.freeQty = freeQty;
+        this.price = price;
         this.amount = amount;
     }
 
@@ -50,7 +57,15 @@ public class PromotionDTO {
         this.freeQty = freeQty;
     }
 
-    public double getAmount() {
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getAmount() {
         return amount;
     }
 

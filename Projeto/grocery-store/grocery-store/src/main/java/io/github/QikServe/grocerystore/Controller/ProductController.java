@@ -18,7 +18,7 @@ public class ProductController {
         private ProductService productService;
 
         @GetMapping
-        public ResponseEntity<?> getAllProducts(){
+        public ResponseEntity<Product[]> getAllProducts(){
             Product[] products = productService.getAllProducts();
             if(products.length == 0){
                 return ResponseEntity.noContent().build();
@@ -38,7 +38,7 @@ public class ProductController {
         @PostMapping("/addToCart")
         public ResponseEntity<List<ItemCheckoutDTO>> addToCart(@RequestBody List<CartItemDTO> items){
             List<ItemCheckoutDTO> itemCheckouts = productService.addToCart(items);
-            if(itemCheckouts.size() == 0){
+            if(itemCheckouts.isEmpty()){
                 return ResponseEntity.noContent().build();
             }
             return ResponseEntity.ok(itemCheckouts);

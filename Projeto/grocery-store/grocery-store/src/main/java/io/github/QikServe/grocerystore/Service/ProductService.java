@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,40 +54,42 @@ public class ProductService {
                         throw  new IllegalStateException("Product is null");
                     }
 
-                    int quantity = item.getQuantity();
+                    BigDecimal quantity = new BigDecimal(item.getQuantity());
 
-                    double productValue = product.getPrice();
-                    double itemTotal = productValue * quantity;
-                    double itemSavings = 0;
+                    BigDecimal productValue = new BigDecimal(product.getPrice());
+                    BigDecimal itemTotal = productValue.multiply(quantity);
+                    BigDecimal itemSavings = BigDecimal.ZERO;
 
                     for (PromotionDTO promotion : product.getPromotions()){
                         switch (promotion.getType()){
                             case FLAT_PERCENT:
-                                double discountAmount = (productValue * promotion.getAmount()) / 100;
-                                itemTotal -= discountAmount * quantity;
-                                itemSavings += discountAmount * quantity;
+                                BigDecimal discountPercentage = BigDecimal.valueOf(promotion.getAmount()).divide(BigDecimal.valueOf(100));
+                                BigDecimal discountAmount = productValue.multiply(discountPercentage);
+
+                                itemTotal = itemTotal.subtract(discountAmount.multiply(quantity));
+                                itemSavings = itemSavings.add(discountAmount.multiply(quantity));
                                 break;
                             case BUY_X_GET_Y_FREE:
-                                int qtFree = quantity / promotion.getRequiredQty();
+                                BigDecimal qtFree = quantity.divide(new BigDecimal(promotion.getRequiredQty()));
 
-                                itemTotal -= qtFree * productValue;
-                                itemSavings += qtFree * productValue;
+                                itemTotal = itemTotal.subtract(qtFree.multiply(productValue));
+                                itemSavings = itemSavings.add(qtFree.multiply(productValue));
                                 break;
                             case QTY_BASED_PRICE_OVERRIDE:
                                 int requiredQt = promotion.getRequiredQty();
-                                double promoPrice = promotion.getAmount();
+                                BigDecimal promoPrice = new BigDecimal(promotion.getPrice());
 
-                                int qtPromo = quantity / requiredQt;
-                                int qtNonPromo = quantity % requiredQt;
+                                int qtPromo = quantity.intValue() / requiredQt;
+                                int qtNonPromo = quantity.intValue() % requiredQt;
 
-                                double totalDesc = qtPromo * promoPrice;
+                                BigDecimal totalDesc = new BigDecimal(qtPromo).multiply(promoPrice);
 
                                 if(qtNonPromo > 0){
-                                    totalDesc += productValue;
+                                    totalDesc.add(productValue);
                                 }
 
-                                itemSavings += itemTotal - totalDesc;
-                                itemTotal -= itemSavings;
+                                itemSavings = itemSavings.add(itemTotal.subtract(totalDesc));
+                                itemTotal = itemTotal.subtract(itemSavings);
                                 break;
                             default:
                                 throw new IllegalArgumentException("Promotion type does not exist");
