@@ -11,6 +11,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,33 +65,19 @@ public class ProductService {
                     for (PromotionDTO promotion : product.getPromotions()){
                         switch (promotion.getType()){
                             case FLAT_PERCENT:
-                                BigDecimal discountPercentage = BigDecimal.valueOf(promotion.getAmount()).divide(BigDecimal.valueOf(100));
-                                BigDecimal discountAmount = productValue.multiply(discountPercentage);
-
-                                itemTotal = itemTotal.subtract(discountAmount.multiply(quantity));
-                                itemSavings = itemSavings.add(discountAmount.multiply(quantity));
+                                BigDecimal[] resultFlatPercent = applyFlatPercentDiscount(itemTotal, productValue, quantity, promotion.getAmount(), itemSavings);
+                                itemTotal = resultFlatPercent[0];
+                                itemSavings = resultFlatPercent[1];
                                 break;
                             case BUY_X_GET_Y_FREE:
-                                BigDecimal qtFree = quantity.divide(new BigDecimal(promotion.getRequiredQty()));
-
-                                itemTotal = itemTotal.subtract(qtFree.multiply(productValue));
-                                itemSavings = itemSavings.add(qtFree.multiply(productValue));
+                                BigDecimal[] resultBuyXGetYFree = applyBuyXGetYFreeDiscount(itemTotal, productValue, quantity, promotion.getRequiredQty(), itemSavings);
+                                itemTotal = resultBuyXGetYFree[0];
+                                itemSavings = resultBuyXGetYFree[1];
                                 break;
                             case QTY_BASED_PRICE_OVERRIDE:
-                                int requiredQt = promotion.getRequiredQty();
-                                BigDecimal promoPrice = new BigDecimal(promotion.getPrice());
-
-                                int qtPromo = quantity.intValue() / requiredQt;
-                                int qtNonPromo = quantity.intValue() % requiredQt;
-
-                                BigDecimal totalDesc = new BigDecimal(qtPromo).multiply(promoPrice);
-
-                                if(qtNonPromo > 0){
-                                    totalDesc.add(productValue);
-                                }
-
-                                itemSavings = itemSavings.add(itemTotal.subtract(totalDesc));
-                                itemTotal = itemTotal.subtract(itemSavings);
+                                BigDecimal[] resultQtyBasedPriceOverride = applyQtyBasedPriceOverrideDiscount(itemTotal, productValue, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
+                                itemTotal = resultQtyBasedPriceOverride[0];
+                                itemSavings = resultQtyBasedPriceOverride[1];
                                 break;
                             default:
                                 throw new ResourceNotFoundException("Promotion type does not exist");
@@ -102,5 +89,41 @@ public class ProductService {
             }
 
             return itemCheckouts;
+        }
+
+        private BigDecimal[] applyFlatPercentDiscount(BigDecimal itemTotal, BigDecimal productValue, BigDecimal quantity, double discountPercent, BigDecimal itemSavings){
+            BigDecimal discountAmount = productValue.multiply(BigDecimal.valueOf(discountPercent)).divide(BigDecimal.valueOf(100));
+            BigDecimal totalDiscount = discountAmount.multiply(quantity);
+
+            itemTotal = itemTotal.subtract(totalDiscount);
+            itemSavings = itemSavings.add(totalDiscount);
+
+            return new BigDecimal[]{itemTotal, itemSavings};
+        }
+
+        private BigDecimal[] applyBuyXGetYFreeDiscount(BigDecimal itemTotal, BigDecimal productValue, BigDecimal quantity, int requiredQty, BigDecimal itemSavings){
+            BigDecimal qtFree = quantity.divide(new BigDecimal(requiredQty), 0, RoundingMode.DOWN);
+            BigDecimal totalFreeItemsValue = productValue.multiply(qtFree);
+
+            itemTotal = itemTotal.subtract(totalFreeItemsValue);
+            itemSavings = itemSavings.add(totalFreeItemsValue);
+
+            return new BigDecimal[]{itemTotal, itemSavings};
+        }
+
+        private BigDecimal[] applyQtyBasedPriceOverrideDiscount(BigDecimal itemTotal, BigDecimal productValue, BigDecimal quantity, int requiredQty, double promoPrice, BigDecimal itemSavings){
+            int qtPromo = quantity.intValue() / requiredQty;
+            int qtNonPromo = quantity.intValue() % requiredQty;
+
+            BigDecimal totalDiscountedPrice  = new BigDecimal(qtPromo).multiply(BigDecimal.valueOf(promoPrice));
+
+            if(qtNonPromo > 0){
+                totalDiscountedPrice  = totalDiscountedPrice .add(productValue);
+            }
+
+            itemSavings = itemSavings.add(itemTotal.subtract(totalDiscountedPrice));
+            itemTotal = itemTotal.subtract(itemSavings);
+
+            return new BigDecimal[]{itemTotal, itemSavings};
         }
 }
