@@ -3,6 +3,7 @@ package io.github.QikServe.grocerystore.Service;
 import io.github.QikServe.grocerystore.DTO.CartItemDTO;
 import io.github.QikServe.grocerystore.DTO.ItemCheckoutDTO;
 import io.github.QikServe.grocerystore.DTO.PromotionDTO;
+import io.github.QikServe.grocerystore.Exception.ResourceNotFoundException;
 import io.github.QikServe.grocerystore.entity.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.List;
 @Service
 public class ProductService {
 
-        private final String WIREMOCKURL = "http://localhost:8081";
+        private static final String WIREMOCKURL = "http://localhost:8081";
 
         private RestTemplate restTemplate;
 
@@ -51,7 +52,7 @@ public class ProductService {
             for (CartItemDTO item : items) {
                     Product product = restTemplate.getForObject(WIREMOCKURL + "/products/" + item.getProductId(), Product.class);
                     if(product == null){
-                        throw  new IllegalStateException("Product is null");
+                        throw  new ResourceNotFoundException("Product is not found for this ID!");
                     }
 
                     BigDecimal quantity = new BigDecimal(item.getQuantity());
@@ -92,7 +93,7 @@ public class ProductService {
                                 itemTotal = itemTotal.subtract(itemSavings);
                                 break;
                             default:
-                                throw new IllegalArgumentException("Promotion type does not exist");
+                                throw new ResourceNotFoundException("Promotion type does not exist");
                         }
                     }
 
