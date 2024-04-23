@@ -92,7 +92,7 @@ public class ProductService {
             BigDecimal itemSavings = BigDecimal.ZERO;
 
             for (PromotionDTO promotion : product.getPromotions()) {
-                BigDecimal[] result = applyPromotion(itemTotal, productPrice, quantity, promotion, itemSavings);
+                BigDecimal[] result = applyPromotionTeste(itemTotal, productPrice, quantity, promotion, itemSavings);
                 itemTotal = result[0];
                 itemSavings = result[1];
             }
@@ -132,6 +132,15 @@ public class ProductService {
                 throw new ResourceNotFoundException("Promotion type does not exist");
         }
         return result;
+    }
+
+    private BigDecimal[] applyPromotionTeste(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity, PromotionDTO promotion, BigDecimal itemSavings){
+        return switch (promotion.getType()) {
+            case FLAT_PERCENT -> applyFlatPercentDiscount(itemTotal, productPrice, quantity, promotion.getAmount(), itemSavings);
+            case BUY_X_GET_Y_FREE -> applyBuyXGetYFreeDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), itemSavings);
+            case QTY_BASED_PRICE_OVERRIDE -> applyQtyBasedPriceOverrideDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
+            default -> throw new ResourceNotFoundException("Promotion type does not exist");
+        };
     }
 
     /**
