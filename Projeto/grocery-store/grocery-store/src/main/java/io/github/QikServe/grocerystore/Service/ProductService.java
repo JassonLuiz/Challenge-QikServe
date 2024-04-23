@@ -114,11 +114,13 @@ public class ProductService {
      * @return An array containing the item's new total price after discounting and the updated savings total.
      * @throws ResourceNotFoundException If the promotion type provided is not supported.
      */
-    private BigDecimal[] applyPromotion(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity, PromotionDTO promotion, BigDecimal itemSavings){
+    private BigDecimal[] applyPromotion(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity,
+                                        PromotionDTO promotion, BigDecimal itemSavings){
         return switch (promotion.getType()) {
             case FLAT_PERCENT -> applyFlatPercentDiscount(itemTotal, productPrice, quantity, promotion.getAmount(), itemSavings);
             case BUY_X_GET_Y_FREE -> applyBuyXGetYFreeDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), itemSavings);
-            case QTY_BASED_PRICE_OVERRIDE -> applyQtyBasedPriceOverrideDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
+            case QTY_BASED_PRICE_OVERRIDE -> applyQtyBasedPriceOverrideDiscount(itemTotal, productPrice, quantity,
+                    promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
             default -> throw new ResourceNotFoundException("Promotion type does not exist");
         };
     }
