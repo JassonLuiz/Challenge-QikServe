@@ -87,30 +87,14 @@ public class ProductService {
 
             BigDecimal quantity = new BigDecimal(item.getQuantity());
 
-            BigDecimal productValue = new BigDecimal(product.getPrice());
-            BigDecimal itemTotal = productValue.multiply(quantity);
+            BigDecimal productPrice = new BigDecimal(product.getPrice());
+            BigDecimal itemTotal = productPrice.multiply(quantity);
             BigDecimal itemSavings = BigDecimal.ZERO;
 
             for (PromotionDTO promotion : product.getPromotions()) {
-                switch (promotion.getType()) {
-                    case FLAT_PERCENT:
-                        BigDecimal[] resultFlatPercent = applyFlatPercentDiscount(itemTotal, productValue, quantity, promotion.getAmount(), itemSavings);
-                        itemTotal = resultFlatPercent[0];
-                        itemSavings = resultFlatPercent[1];
-                        break;
-                    case BUY_X_GET_Y_FREE:
-                        BigDecimal[] resultBuyXGetYFree = applyBuyXGetYFreeDiscount(itemTotal, productValue, quantity, promotion.getRequiredQty(), itemSavings);
-                        itemTotal = resultBuyXGetYFree[0];
-                        itemSavings = resultBuyXGetYFree[1];
-                        break;
-                    case QTY_BASED_PRICE_OVERRIDE:
-                        BigDecimal[] resultQtyBasedPriceOverride = applyQtyBasedPriceOverrideDiscount(itemTotal, productValue, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
-                        itemTotal = resultQtyBasedPriceOverride[0];
-                        itemSavings = resultQtyBasedPriceOverride[1];
-                        break;
-                    default:
-                        throw new ResourceNotFoundException("Promotion type does not exist");
-                }
+                BigDecimal[] result = applyPromotion(itemTotal, productPrice, quantity, promotion, itemSavings);
+                itemTotal = result[0];
+                itemSavings = result[1];
             }
 
             ItemCheckoutDTO dto = new ItemCheckoutDTO(product, quantity, itemTotal, itemSavings);
@@ -120,6 +104,35 @@ public class ProductService {
         return itemCheckouts;
     }
 
+
+    /**
+     * Applies a promotion to the total price of the item and calculates the associated savings, based on the type of promotion provided.
+     * @param itemTotal The total value of the item before discount.
+     * @param productPrice The unit value of the product.
+     * @param quantity The quantity of the product.
+     * @param promotion The promotion to be applied.
+     * @param itemSavings The total savings accumulated to date.
+     * @return An array containing the item's new total price after discounting and the updated savings total.
+     * @throws ResourceNotFoundException If the promotion type provided is not supported.
+     */
+    private BigDecimal[] applyPromotion(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity, PromotionDTO promotion, BigDecimal itemSavings){
+        BigDecimal [] result = new BigDecimal[2];
+
+        switch (promotion.getType()) {
+            case FLAT_PERCENT:
+                result = applyFlatPercentDiscount(itemTotal, productPrice, quantity, promotion.getAmount(), itemSavings);
+                break;
+            case BUY_X_GET_Y_FREE:
+                result = applyBuyXGetYFreeDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), itemSavings);
+                break;
+            case QTY_BASED_PRICE_OVERRIDE:
+                result = applyQtyBasedPriceOverrideDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
+                break;
+            default:
+                throw new ResourceNotFoundException("Promotion type does not exist");
+        }
+        return result;
+    }
 
     /**
      * Applies a fixed percentage discount to the total value of the item.
