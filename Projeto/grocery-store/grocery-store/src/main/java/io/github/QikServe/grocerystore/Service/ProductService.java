@@ -92,7 +92,7 @@ public class ProductService {
             BigDecimal itemSavings = BigDecimal.ZERO;
 
             for (PromotionDTO promotion : product.getPromotions()) {
-                BigDecimal[] result = applyPromotionTeste(itemTotal, productPrice, quantity, promotion, itemSavings);
+                BigDecimal[] result = applyPromotion(itemTotal, productPrice, quantity, promotion, itemSavings);
                 itemTotal = result[0];
                 itemSavings = result[1];
             }
@@ -103,7 +103,6 @@ public class ProductService {
 
         return itemCheckouts;
     }
-
 
     /**
      * Applies a promotion to the total price of the item and calculates the associated savings, based on the type of promotion provided.
@@ -116,25 +115,6 @@ public class ProductService {
      * @throws ResourceNotFoundException If the promotion type provided is not supported.
      */
     private BigDecimal[] applyPromotion(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity, PromotionDTO promotion, BigDecimal itemSavings){
-        BigDecimal [] result = new BigDecimal[2];
-
-        switch (promotion.getType()) {
-            case FLAT_PERCENT:
-                result = applyFlatPercentDiscount(itemTotal, productPrice, quantity, promotion.getAmount(), itemSavings);
-                break;
-            case BUY_X_GET_Y_FREE:
-                result = applyBuyXGetYFreeDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), itemSavings);
-                break;
-            case QTY_BASED_PRICE_OVERRIDE:
-                result = applyQtyBasedPriceOverrideDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), promotion.getPrice(), itemSavings);
-                break;
-            default:
-                throw new ResourceNotFoundException("Promotion type does not exist");
-        }
-        return result;
-    }
-
-    private BigDecimal[] applyPromotionTeste(BigDecimal itemTotal, BigDecimal productPrice, BigDecimal quantity, PromotionDTO promotion, BigDecimal itemSavings){
         return switch (promotion.getType()) {
             case FLAT_PERCENT -> applyFlatPercentDiscount(itemTotal, productPrice, quantity, promotion.getAmount(), itemSavings);
             case BUY_X_GET_Y_FREE -> applyBuyXGetYFreeDiscount(itemTotal, productPrice, quantity, promotion.getRequiredQty(), itemSavings);
